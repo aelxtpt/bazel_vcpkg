@@ -38,5 +38,19 @@ load_vcpkg_dependencies(
 )
 ```
 
+In your project BUILD:
+```
+
+
+cc_library(
+    name = "app",
+    srcs = ["main.cpp"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@vcpkg//:protobuf",
+    ],
+)
+```
+
 ## Limitations
 - This rule will link all installed libraries statically to your binary, so install only what you really need.
