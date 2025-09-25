@@ -26,6 +26,7 @@ def _load_vcpkg_dependencies_impl(repository_ctx):
 
     arch = repository_ctx.attr.arch.name
     update_baseline = repository_ctx.attr.update_baseline
+    timeout = repository_ctx.attr.timeout
 
     repo_root = repository_ctx.path("")
     vcpkg_exe = repository_ctx.path("{}/vcpkg".format(vcpkg_root))
@@ -58,12 +59,12 @@ def _load_vcpkg_dependencies_impl(repository_ctx):
         )
 
         result = repository_ctx.execute([
-            "bash", "-c", 
+            "bash", "-c",
             "cd {project_dir} && {vcpkg_exe} x-update-baseline --add-initial-baseline".format(
                 project_dir = str(project_dir),
                 vcpkg_exe = str(vcpkg_exe)
             )
-        ])
+        ], timeout = timeout)
         
         if result.return_code != 0:
             fail("Failed to update baseline:\nSTDOUT:\n{}\nSTDERR:\n{}".format(
@@ -93,14 +94,15 @@ def _load_vcpkg_dependencies_impl(repository_ctx):
         "--x-manifest-root={}".format(str(project_dir)),
         "--x-install-root={}".format(str(project_dir.get_child("installed")))
     ]
-    
+
     result = repository_ctx.execute(
         install_args,
         environment = {
             "VCPKG_ROOT": str(vcpkg_root),
             "VCPKG_DOWNLOADS": str(project_dir.get_child("downloads"))
         },
-        quiet = False
+        quiet = False,
+        timeout = timeout
     )
     
     if result.return_code != 0:
@@ -138,7 +140,8 @@ load_vcpkg_dependencies = repository_rule(
     attrs = {
         "libs_path": attr.label(mandatory = True, allow_single_file = True),
         "arch": attr.label(mandatory = True),
-        "update_baseline": attr.bool(default = False)
+        "update_baseline": attr.bool(default = False),
+        "timeout": attr.int(default = 1800)
     },
     environ = ["VCPKG_ROOT"],
 )
